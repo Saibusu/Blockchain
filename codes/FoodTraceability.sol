@@ -126,8 +126,9 @@ contract FoodTraceability {
         string memory _origin,
         uint256 _productionDate
     ) external onlyRole(Role.Producer) {
-        require(!batches[_batchId].isActive, "Batch ID already registered");
         require(bytes(_batchId).length > 0, "Batch ID cannot be empty");
+        // 以 batchId 是否曾存在判斷重複，避免停用後可重複登記同一 ID
+        require(bytes(batches[_batchId].batchId).length == 0, "Batch ID already registered");
 
         batches[_batchId] = FoodBatch({
             batchId:        _batchId,
@@ -213,28 +214,29 @@ contract FoodTraceability {
     }
 
     /**
-     * @notice 查詢批次完整供應鏈履歷
+     * @notice 查詢批次完整供應鏈履歷（批次召回後仍可查詢，供追責用）
      * @param _batchId  批次編號
      * @return TraceRecord 陣列（依時間先後排列）
      */
     function getBatchHistory(string memory _batchId)
         external view
-        batchExists(_batchId)
         returns (TraceRecord[] memory)
     {
+        // 不限制 isActive，確保召回後仍可查歷史記錄
+        require(bytes(batches[_batchId].batchId).length > 0, "Batch not found");
         return traceHistory[_batchId];
     }
 
     /**
-     * @notice 查詢批次追蹤記錄總筆數
+     * @notice 查詢批次追蹤記錄總筆數（批次召回後仍可查詢）
      * @param _batchId  批次編號
      * @return 記錄筆數
      */
     function getTraceCount(string memory _batchId)
         external view
-        batchExists(_batchId)
         returns (uint256)
     {
+        require(bytes(batches[_batchId].batchId).length > 0, "Batch not found");
         return traceHistory[_batchId].length;
     }
 }
