@@ -1,0 +1,591 @@
+{
+	"compiler": {
+		"version": "0.8.34+commit.80d5c536"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "batchId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "productName",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "producer",
+						"type": "address"
+					}
+				],
+				"name": "BatchRegistered",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "batchId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "handler",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "action",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "RecordAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum FoodTraceability.Role",
+						"name": "role",
+						"type": "uint8"
+					}
+				],
+				"name": "RoleAssigned",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "batchId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "int256",
+						"name": "temperature",
+						"type": "int256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "reporter",
+						"type": "address"
+					}
+				],
+				"name": "TemperatureAlert",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_location",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_action",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "_temperature",
+						"type": "int256"
+					}
+				],
+				"name": "addTraceRecord",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_addr",
+						"type": "address"
+					},
+					{
+						"internalType": "enum FoodTraceability.Role",
+						"name": "_role",
+						"type": "uint8"
+					}
+				],
+				"name": "assignRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "batches",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "batchId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "productName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "origin",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "productionDate",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "producer",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					}
+				],
+				"name": "deactivateBatch",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					}
+				],
+				"name": "getBatchHistory",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "handler",
+								"type": "address"
+							},
+							{
+								"internalType": "enum FoodTraceability.Role",
+								"name": "role",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "location",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "action",
+								"type": "string"
+							},
+							{
+								"internalType": "int256",
+								"name": "temperature",
+								"type": "int256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct FoodTraceability.TraceRecord[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					}
+				],
+				"name": "getBatchInfo",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "batchId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "productName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "origin",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "productionDate",
+								"type": "uint256"
+							},
+							{
+								"internalType": "address",
+								"name": "producer",
+								"type": "address"
+							},
+							{
+								"internalType": "bool",
+								"name": "isActive",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct FoodTraceability.FoodBatch",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_addr",
+						"type": "address"
+					}
+				],
+				"name": "getRole",
+				"outputs": [
+					{
+						"internalType": "enum FoodTraceability.Role",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					}
+				],
+				"name": "getTraceCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_batchId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_productName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_origin",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_productionDate",
+						"type": "uint256"
+					}
+				],
+				"name": "registerBatch",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "roles",
+				"outputs": [
+					{
+						"internalType": "enum FoodTraceability.Role",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "traceHistory",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "handler",
+						"type": "address"
+					},
+					{
+						"internalType": "enum FoodTraceability.Role",
+						"name": "role",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "location",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "action",
+						"type": "string"
+					},
+					{
+						"internalType": "int256",
+						"name": "temperature",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "區塊鏈創新應用專題 — 食品供應鏈主題      使用平台：Remix IDE  語言：Solidity ^0.8.0",
+			"kind": "dev",
+			"methods": {
+				"addTraceRecord(string,string,string,int256)": {
+					"params": {
+						"_action": "操作描述",
+						"_batchId": "批次編號",
+						"_location": "操作地點",
+						"_temperature": "當前溫度（×10，例：42 = 4.2°C）"
+					}
+				},
+				"assignRole(address,uint8)": {
+					"params": {
+						"_addr": "目標地址",
+						"_role": "指派角色（1=Producer, 2=Processor, 3=Logistics, 4=Retailer, 5=Regulator）"
+					}
+				},
+				"deactivateBatch(string)": {
+					"params": {
+						"_batchId": "批次編號"
+					}
+				},
+				"getBatchHistory(string)": {
+					"params": {
+						"_batchId": "批次編號"
+					},
+					"returns": {
+						"_0": "TraceRecord 陣列（依時間先後排列）"
+					}
+				},
+				"getBatchInfo(string)": {
+					"params": {
+						"_batchId": "批次編號"
+					},
+					"returns": {
+						"_0": "FoodBatch struct"
+					}
+				},
+				"getRole(address)": {
+					"params": {
+						"_addr": "查詢地址"
+					},
+					"returns": {
+						"_0": "角色編號"
+					}
+				},
+				"getTraceCount(string)": {
+					"params": {
+						"_batchId": "批次編號"
+					},
+					"returns": {
+						"_0": "記錄筆數"
+					}
+				},
+				"registerBatch(string,string,string,uint256)": {
+					"params": {
+						"_batchId": "批次編號（需唯一）",
+						"_origin": "產地描述",
+						"_productName": "產品名稱",
+						"_productionDate": "生產日期（Unix timestamp）"
+					}
+				}
+			},
+			"title": "FoodTraceability",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"addTraceRecord(string,string,string,int256)": {
+					"notice": "新增供應鏈環節記錄（所有已登記參與者均可呼叫）"
+				},
+				"assignRole(address,uint8)": {
+					"notice": "指派角色給指定地址（僅限合約擁有者）"
+				},
+				"deactivateBatch(string)": {
+					"notice": "停用批次（例：召回或下架，僅限 Regulator）"
+				},
+				"getBatchHistory(string)": {
+					"notice": "查詢批次完整供應鏈履歷（批次召回後仍可查詢，供追責用）"
+				},
+				"getBatchInfo(string)": {
+					"notice": "查詢批次基本資訊"
+				},
+				"getRole(address)": {
+					"notice": "查詢指定地址的角色"
+				},
+				"getTraceCount(string)": {
+					"notice": "查詢批次追蹤記錄總筆數（批次召回後仍可查詢）"
+				},
+				"registerBatch(string,string,string,uint256)": {
+					"notice": "登記新食品批次（僅限 Producer 角色）"
+				}
+			},
+			"notice": "食品供應鏈溯源智能合約（Proof of Concept）",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"codes/FoodTraceability.sol": "FoodTraceability"
+		},
+		"evmVersion": "shanghai",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"codes/FoodTraceability.sol": {
+			"keccak256": "0x7f24155bf77f3be2540c2fe9b0f604805973a8db595d648fab87199e56a7ddf6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://3874a747b8096e445dea4158d23dc71d9ee511af489b3c49f8a1747d7cab94cc",
+				"dweb:/ipfs/Qmbj16vEgCU69PF9g344efEmfkCQtPJYs8bEqYLzXThrG8"
+			]
+		}
+	},
+	"version": 1
+}
