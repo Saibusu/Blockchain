@@ -132,6 +132,7 @@ FoodTraceability Contract
 
 ### 3. 成果收割
 點擊藍色唯讀函式 **`getBatchHistory("BATCH-2026-FINAL")`**，系統將回傳完美的 Tuple Array，將此不可篡改之鏈上五階段追責數據（包含每個環節的發起地址、精準溫度與遞增時間戳記）截圖，即可作為期末報告之核心成果。
+<img width="1252" height="620" alt="高麗菜6-完整履歷表" src="https://github.com/user-attachments/assets/fe5250b8-50ed-4205-b9a3-91ab554f1703" />
 
 ---
 
