@@ -102,24 +102,33 @@ FoodTraceability Contract
   - `_productName`: `"有機高麗菜"`
   - `_origin`: `"宜蘭縣三星鄉"`
   - `_productionDate`: `1653436800` (客觀過去時間戳記)
+  - <img width="1256" height="595" alt="高麗菜1-商品註冊成功" src="https://github.com/user-attachments/assets/5c027a37-1552-43aa-901c-cdafee4a56bc" />
+
 * **【階段 2：加工商進場】** 呼叫 `addTraceRecord`
   - `_location`: `"礁溪截切包裝廠"`
   - `_action`: `"低溫清洗、冷藏包裝完成"`
   - `_temperature`: `40` (代表 4.0°C，安全冷鏈)
+  - <img width="1272" height="606" alt="高麗菜2-加工廠新增紀錄" src="https://github.com/user-attachments/assets/a893f809-2bde-4ed5-ad72-9608f61bcf30" />
 * **【階段 3：冷鏈物流爆發異常】** 呼叫 `addTraceRecord`
   - `_location`: `"國道一號冷藏車"`
   - `_action`: `"冷鏈轉轉運中（發現車廂失溫異常）"`
   - `_temperature`: **`95`** (🔥故意輸入 9.5°C！智慧合約底層 `_temperature > 80` 條件成立，**鏈上當場秒噴 `TemperatureAlert` 告警事件！**)
+  - <img width="1286" height="619" alt="高麗菜3-物流商新增運輸紀錄" src="https://github.com/user-attachments/assets/e103a7f9-50f3-4b66-8b58-91cdf44ba29d" />
+
 * **【階段 4：通路端拒收把關】** 呼叫 `addTraceRecord`
   - `_location`: `"全聯福利中心 中山晴光店"`
   - `_action`: `"門市檢測到鏈上 TemperatureAlert，予以拒收並移至隔離區"`
   - `_temperature`: `70` (7.0°C)
   - *(註：此時合約並未盲目終止，批次 `isActive` 仍為 `true`，確保全聯門市能合法寫入這筆品管鐵證，責任歸屬一目了然)*
+  - <img width="1277" height="618" alt="高麗菜4-零售商新增紀錄" src="https://github.com/user-attachments/assets/84036ad4-c9ea-4db2-8150-3d9526e771a9" />
+
 * **【階段 5：主管機關降臨處分】** 呼叫 `addTraceRecord` 後呼叫召回
   - `_location`: `"臺北市衛生局檢驗科"`
   - `_action`: `"判定該批次嚴重失溫銷毀，啟動重大食安召回處分"`
   - `_temperature`: `250`
   - **【終審判決】**：隨後由衛生局地址呼叫 **`deactivateBatch("BATCH-2026-FINAL")`**。合約將 `isActive` 變更為 `false`，全面封鎖該批次後續所有操作，全案結案。
+  - <img width="1267" height="616" alt="高麗菜5-商品召回指令" src="https://github.com/user-attachments/assets/e480a64c-a024-444b-93f4-d9c402ef0545" />
+
 
 ### 3. 成果收割
 點擊藍色唯讀函式 **`getBatchHistory("BATCH-2026-FINAL")`**，系統將回傳完美的 Tuple Array，將此不可篡改之鏈上五階段追責數據（包含每個環節的發起地址、精準溫度與遞增時間戳記）截圖，即可作為期末報告之核心成果。
@@ -137,5 +146,3 @@ FoodTraceability Contract
 - Buterin, V. (2014). *Ethereum: A Next-Generation Smart Contract and Decentralized Application Platform*
 - Walmart & IBM (2018). *Food Trust: Blockchain for Food Safety*
 - [Solidity Documentation](https://docs.soliditylang.org/)
-
-```
