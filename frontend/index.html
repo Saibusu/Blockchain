@@ -46,6 +46,16 @@
   </div>
 </header>
 
+<!-- ===== ACTIVE BATCH BANNER ===== -->
+<div id="activeBatchBar" class="hidden bg-blue-700 text-white px-5 py-2">
+  <div class="max-w-7xl mx-auto flex items-center gap-3 text-sm">
+    <span class="text-blue-300 text-xs font-semibold uppercase tracking-wider">目前追蹤批次</span>
+    <span id="activeBatchLabel" class="font-bold font-mono bg-blue-800 px-3 py-0.5 rounded-lg"></span>
+    <button onclick="clearActiveBatch()"
+      class="ml-auto text-blue-300 hover:text-white text-xs transition">✕ 清除</button>
+  </div>
+</div>
+
 <!-- ===== CONTRACT SETUP ===== -->
 <div id="setupBar" class="bg-amber-50 border-b border-amber-200 px-5 py-2.5">
   <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3 text-sm">
@@ -322,11 +332,35 @@ const ROLES = {
 // ─────────────────────────────────────────────
 //  State
 // ─────────────────────────────────────────────
-let provider = null;
-let signer   = null;
-let contract = null;
-let userAddr = '';
-let userRole = 0;
+let provider      = null;
+let signer        = null;
+let contract      = null;
+let userAddr      = '';
+let userRole      = 0;
+let activeBatchId = '';   // shared across all tabs
+
+// All input IDs that hold a batchId, one per tab
+const BATCH_INPUTS = ['traceId', 'queryBatchId', 'recallBatchId'];
+
+function setActiveBatch(id) {
+  if (!id) return;
+  activeBatchId = id;
+  document.getElementById('activeBatchLabel').textContent = id;
+  document.getElementById('activeBatchBar').classList.remove('hidden');
+  BATCH_INPUTS.forEach(inputId => {
+    const el = document.getElementById(inputId);
+    if (el) el.value = id;
+  });
+}
+
+function clearActiveBatch() {
+  activeBatchId = '';
+  document.getElementById('activeBatchBar').classList.add('hidden');
+  BATCH_INPUTS.forEach(inputId => {
+    const el = document.getElementById(inputId);
+    if (el) el.value = '';
+  });
+}
 
 // ─────────────────────────────────────────────
 //  Wallet
@@ -462,6 +496,7 @@ async function doRegisterBatch() {
     addLog('pending', `交易已送出：${shortTx(tx.hash)}`);
     await tx.wait();
     addLog('success', `✅ 批次登記成功！[${batchId}] ${productName}`);
+    setActiveBatch(batchId);
   } catch(e) { addLog('error', parseErr(e)); }
 }
 
@@ -493,6 +528,7 @@ async function doQueryBatch() {
     const info    = await contract.getBatchInfo(batchId);
     const history = await contract.getBatchHistory(batchId);
     showBatchResult(info, history);
+    setActiveBatch(batchId);
     addLog('info', `🔍 查詢完成：${batchId}，共 ${history.length} 筆記錄`);
   } catch(e) {
     document.getElementById('queryResult').classList.add('hidden');
