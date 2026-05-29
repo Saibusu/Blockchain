@@ -231,9 +231,9 @@
 								"type": "address"
 							},
 							{
-								"internalType": "enum FoodTraceability.Role",
+								"internalType": "uint256",
 								"name": "role",
-								"type": "uint8"
+								"type": "uint256"
 							},
 							{
 								"internalType": "string",
@@ -434,9 +434,9 @@
 						"type": "address"
 					},
 					{
-						"internalType": "enum FoodTraceability.Role",
+						"internalType": "uint256",
 						"name": "role",
-						"type": "uint8"
+						"type": "uint256"
 					},
 					{
 						"internalType": "string",
@@ -464,7 +464,7 @@
 			}
 		],
 		"devdoc": {
-			"details": "區塊鏈創新應用專題 — 食品供應鏈主題      使用平台：Remix IDE  語言：Solidity ^0.8.0",
+			"details": "區塊鏈創新應用專題 — 食品供應鏈主題 使用平台：Remix IDE  語言：Solidity ^0.8.0",
 			"kind": "dev",
 			"methods": {
 				"addTraceRecord(string,string,string,int256)": {
@@ -472,7 +472,7 @@
 						"_action": "操作描述",
 						"_batchId": "批次編號",
 						"_location": "操作地點",
-						"_temperature": "當前溫度（×10，例：42 = 4.2°C）"
+						"_temperature": "當前溫度（×10，例：90 = 9.0°C）"
 					}
 				},
 				"assignRole(address,uint8)": {
@@ -566,7 +566,7 @@
 		"compilationTarget": {
 			"codes/FoodTraceability.sol": "FoodTraceability"
 		},
-		"evmVersion": "shanghai",
+		"evmVersion": "osaka",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -579,11 +579,11 @@
 	},
 	"sources": {
 		"codes/FoodTraceability.sol": {
-			"keccak256": "0x7f24155bf77f3be2540c2fe9b0f604805973a8db595d648fab87199e56a7ddf6",
+			"keccak256": "0x4a7004909f91a357aae5aa1ee0fe5a608c9687747618c08775fc704725feba9f",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://3874a747b8096e445dea4158d23dc71d9ee511af489b3c49f8a1747d7cab94cc",
-				"dweb:/ipfs/Qmbj16vEgCU69PF9g344efEmfkCQtPJYs8bEqYLzXThrG8"
+				"bzz-raw://2cf65d1d88232661df9691bb7e37a8a3ab74eecbd38e958210b4953836c5a661",
+				"dweb:/ipfs/QmeKHoBXZnnQPKEeyuqj352W47RzeP51tpFZyUxX3dQ3Aj"
 			]
 		}
 	},

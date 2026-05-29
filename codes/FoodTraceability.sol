@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @title FoodTraceability
  * @notice 食品供應鏈溯源智能合約（Proof of Concept）
  * @dev 區塊鏈創新應用專題 — 食品供應鏈主題
- *      使用平台：Remix IDE  語言：Solidity ^0.8.0
+ * 使用平台：Remix IDE  語言：Solidity ^0.8.0
  */
 contract FoodTraceability {
 
@@ -21,21 +21,21 @@ contract FoodTraceability {
     /// @dev 單筆供應鏈追蹤記錄
     struct TraceRecord {
         address handler;       // 操作者帳號
-        Role    role;          // 操作者角色
+        uint256 role;          // 已優化：改用整數（1=Producer, 2=Processor...）避免底層 Enum 衝突
         string  location;      // 操作地點
         string  action;        // 操作描述
-        int256  temperature;   // 溫度 ×10（例：250 = 25.0°C）
+        int256  temperature;   // 溫度（放大10倍，例：90 = 9.0°C）
         uint256 timestamp;     // 區塊時間戳記
     }
 
     /// @dev 食品批次基本資料
     struct FoodBatch {
-        string   batchId;        // 批次編號
-        string   productName;    // 產品名稱
-        string   origin;         // 產地
-        uint256  productionDate; // 生產日期（Unix timestamp）
-        address  producer;       // 生產者地址
-        bool     isActive;       // 批次是否有效
+        string  batchId;        // 批次編號
+        string  productName;    // 產品名稱
+        string  origin;         // 產地
+        uint256 productionDate; // 生產日期（Unix timestamp）
+        address producer;       // 生育者地址
+        bool    isActive;       // 批次是否有效
     }
 
     // =========================================================
@@ -83,7 +83,7 @@ contract FoodTraceability {
     // =========================================================
     constructor() {
         owner = msg.sender;
-        roles[msg.sender] = Role.Regulator;
+        roles[msg.sender] = Role.Regulator; // 讓合約部署者預設為監管機關
     }
 
     // =========================================================
@@ -127,8 +127,8 @@ contract FoodTraceability {
         uint256 _productionDate
     ) external onlyRole(Role.Producer) {
         require(bytes(_batchId).length > 0, "Batch ID cannot be empty");
-        // 以 batchId 是否曾存在判斷重複，避免停用後可重複登記同一 ID
         require(bytes(batches[_batchId].batchId).length == 0, "Batch ID already registered");
+        require(_productionDate <= block.timestamp, "Production date cannot be in the future");
 
         batches[_batchId] = FoodBatch({
             batchId:        _batchId,
@@ -139,15 +139,16 @@ contract FoodTraceability {
             isActive:       true
         });
 
-        // 自動建立第一筆產地記錄
-        traceHistory[_batchId].push(TraceRecord({
-            handler:     msg.sender,
-            role:        Role.Producer,
-            location:    _origin,
-            action:      "Product harvested and registered on blockchain",
-            temperature: 250,   // 預設 25.0°C（常溫採收）
-            timestamp:   block.timestamp
-        }));
+        // 🔥 【已修復】直接在 Storage 儲存空間初始化並寫入，徹底解決內存分配的 invalid opcode Bug
+        traceHistory[_batchId].push(); 
+        uint256 lastIndex = traceHistory[_batchId].length - 1;
+        
+        traceHistory[_batchId][lastIndex].handler = msg.sender;
+        traceHistory[_batchId][lastIndex].role = uint256(Role.Producer);
+        traceHistory[_batchId][lastIndex].location = _origin;
+        traceHistory[_batchId][lastIndex].action = "Product harvested and registered on blockchain";
+        traceHistory[_batchId][lastIndex].temperature = 250; // 預設 25.0°C
+        traceHistory[_batchId][lastIndex].timestamp = block.timestamp;
 
         emit BatchRegistered(_batchId, _productName, msg.sender);
         emit RecordAdded(_batchId, msg.sender, "Product harvested and registered on blockchain", block.timestamp);
@@ -158,7 +159,7 @@ contract FoodTraceability {
      * @param _batchId     批次編號
      * @param _location    操作地點
      * @param _action      操作描述
-     * @param _temperature 當前溫度（×10，例：42 = 4.2°C）
+     * @param _temperature 當前溫度（×10，例：90 = 9.0°C）
      */
     function addTraceRecord(
         string memory _batchId,
@@ -167,14 +168,16 @@ contract FoodTraceability {
         int256        _temperature
     ) external batchExists(_batchId) onlyRegisteredParticipant {
 
-        traceHistory[_batchId].push(TraceRecord({
-            handler:     msg.sender,
-            role:        roles[msg.sender],
-            location:    _location,
-            action:      _action,
-            temperature: _temperature,
-            timestamp:   block.timestamp
-        }));
+        // 🔥 【已修復】對齊直寫邏輯，物流商動態追加紀錄絕不卡死
+        traceHistory[_batchId].push();
+        uint256 lastIndex = traceHistory[_batchId].length - 1;
+        
+        traceHistory[_batchId][lastIndex].handler = msg.sender;
+        traceHistory[_batchId][lastIndex].role = uint256(roles[msg.sender]);
+        traceHistory[_batchId][lastIndex].location = _location;
+        traceHistory[_batchId][lastIndex].action = _action;
+        traceHistory[_batchId][lastIndex].temperature = _temperature;
+        traceHistory[_batchId][lastIndex].timestamp = block.timestamp;
 
         // 冷鏈超溫警告：超過 8.0°C（即 _temperature > 80）自動觸發
         if (_temperature > 80) {
@@ -222,7 +225,6 @@ contract FoodTraceability {
         external view
         returns (TraceRecord[] memory)
     {
-        // 不限制 isActive，確保召回後仍可查歷史記錄
         require(bytes(batches[_batchId].batchId).length > 0, "Batch not found");
         return traceHistory[_batchId];
     }
