@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodChain — 食品供應鏈溯源系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <style>
+    .tab-btn { transition: all .2s; }
+    .tab-btn.active { background:#1d4ed8; color:#fff; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .timeline-line { position:absolute; left:19px; top:40px; bottom:-12px; width:2px; background:#e5e7eb; }
+    .alert-pulse { animation: alertPulse 1.2s ease-in-out infinite; }
+    @keyframes alertPulse { 0%,100%{background:#fef2f2} 50%{background:#fee2e2} }
+    .chain-connector { flex:1; height:2px; background:linear-gradient(90deg,#d1d5db 0%,#3b82f6 50%,#d1d5db 100%); margin:0 6px; margin-bottom:20px; }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:#f1f5f9; }
+    ::-webkit-scrollbar-thumb { background:#94a3b8; border-radius:3px; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans">
+
+<!-- ===== HEADER ===== -->
+<header class="bg-blue-900 text-white shadow-xl sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">🌾</span>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">FoodChain</h1>
+        <p class="text-blue-300 text-xs">食品供應鏈區塊鏈溯源系統</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div id="walletInfo" class="hidden text-right text-sm">
+        <p class="text-blue-200 text-xs">已連接帳號</p>
+        <p id="walletAddr" class="font-mono text-xs"></p>
+        <p id="walletRole" class="mt-0.5"></p>
+      </div>
+      <button id="connectBtn" onclick="connectWallet()"
+        class="bg-emerald-500 hover:bg-emerald-400 px-5 py-2 rounded-lg font-bold text-sm transition shadow">
+        🦊 連接 MetaMask
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== CONTRACT SETUP ===== -->
+<div id="setupBar" class="bg-amber-50 border-b border-amber-200 px-5 py-2.5">
+  <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3 text-sm">
+    <span class="font-semibold text-amber-800">📋 合約地址</span>
+    <input id="contractAddrInput" type="text" placeholder="貼上 Remix 部署後的合約地址  0x..."
+      class="flex-1 min-w-64 border border-amber-300 rounded-lg px-3 py-1.5 font-mono text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+    <button onclick="loadContract()"
+      class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-1.5 rounded-lg font-bold transition">
+      載入合約
+    </button>
+    <span id="contractStatus" class="text-xs text-slate-500"></span>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main class="max-w-7xl mx-auto px-5 py-5 space-y-4">
+
+  <!-- Supply Chain Flow Banner -->
+  <div class="bg-white rounded-2xl shadow p-5">
+    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">供應鏈流程</h2>
+    <div class="flex items-end justify-between">
+      <div class="flex flex-col items-center">
+        <div id="badge-1" class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-2xl ring-2 ring-transparent transition">🌱</div>
+        <p class="text-xs font-bold text-emerald-700 mt-1.5">生產者</p>
+        <p class="text-xs text-slate-400">Producer</p>
+      </div>
+      <div class="chain-connector"></div>
+      <div class="flex flex-col items-center">
+        <div id="badge-2" class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl ring-2 ring-transparent transition">🏭</div>
+        <p class="text-xs font-bold text-blue-700 mt-1.5">加工商</p>
+        <p class="text-xs text-slate-400">Processor</p>
+      </div>
+      <div class="chain-connector"></div>
+      <div class="flex flex-col items-center">
+        <div id="badge-3" class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-2xl ring-2 ring-transparent transition">🚛</div>
+        <p class="text-xs font-bold text-orange-700 mt-1.5">物流商</p>
+        <p class="text-xs text-slate-400">Logistics</p>
+      </div>
+      <div class="chain-connector"></div>
+      <div class="flex flex-col items-center">
+        <div id="badge-4" class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-2xl ring-2 ring-transparent transition">🏪</div>
+        <p class="text-xs font-bold text-purple-700 mt-1.5">零售商</p>
+        <p class="text-xs text-slate-400">Retailer</p>
+      </div>
+      <div class="chain-connector"></div>
+      <div class="flex flex-col items-center">
+        <div id="badge-5" class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-2xl ring-2 ring-transparent transition">🏛️</div>
+        <p class="text-xs font-bold text-red-700 mt-1.5">監管機關</p>
+        <p class="text-xs text-slate-400">Regulator</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+
+    <!-- ===== LEFT: OPERATIONS ===== -->
+    <div class="col-span-2 bg-white rounded-2xl shadow overflow-hidden">
+
+      <!-- Tabs -->
+      <div class="flex border-b bg-slate-50">
+        <button class="tab-btn active px-4 py-3 text-sm font-semibold rounded-none" onclick="switchTab('admin')">🔑 角色管理</button>
+        <button class="tab-btn px-4 py-3 text-sm font-semibold rounded-none" onclick="switchTab('register')">📦 批次登記</button>
+        <button class="tab-btn px-4 py-3 text-sm font-semibold rounded-none" onclick="switchTab('trace')">📝 新增記錄</button>
+        <button class="tab-btn px-4 py-3 text-sm font-semibold rounded-none" onclick="switchTab('query')">🔍 溯源查詢</button>
+        <button class="tab-btn px-4 py-3 text-sm font-semibold rounded-none" onclick="switchTab('recall')">⛔ 產品召回</button>
+      </div>
+
+      <!-- Tab: Admin -->
+      <div id="tab-admin" class="tab-content active p-6">
+        <h3 class="font-bold text-slate-700 mb-1">指派角色</h3>
+        <p class="text-xs text-slate-400 mb-5">僅限合約擁有者（Owner）可執行</p>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-slate-600">目標帳號地址</label>
+            <input id="roleAddr" type="text" placeholder="0x..."
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600">指派角色</label>
+            <select id="roleSelect" class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <option value="1">🌱  1 — Producer（生產者）</option>
+              <option value="2">🏭  2 — Processor（加工商）</option>
+              <option value="3">🚛  3 — Logistics（物流商）</option>
+              <option value="4">🏪  4 — Retailer（零售商）</option>
+              <option value="5">🏛️  5 — Regulator（監管機關）</option>
+            </select>
+          </div>
+          <button onclick="doAssignRole()"
+            class="w-full bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-xl font-bold transition shadow">
+            確認指派角色
+          </button>
+        </div>
+        <hr class="my-5"/>
+        <h4 class="font-semibold text-slate-600 mb-3">查詢帳號角色</h4>
+        <div class="flex gap-2">
+          <input id="queryRoleAddr" type="text" placeholder="0x..."
+            class="flex-1 border rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-300"/>
+          <button onclick="doQueryRole()"
+            class="bg-slate-600 hover:bg-slate-700 text-white px-5 rounded-xl text-sm font-bold transition">
+            查詢
+          </button>
+        </div>
+        <div id="queryRoleResult" class="mt-3 text-sm"></div>
+      </div>
+
+      <!-- Tab: Register -->
+      <div id="tab-register" class="tab-content p-6">
+        <h3 class="font-bold text-slate-700 mb-1">登記食品批次</h3>
+        <p class="text-xs text-slate-400 mb-5">僅限 Producer（生產者）角色可執行</p>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-slate-600">批次編號 (batchId)</label>
+              <input id="regBatchId" type="text" placeholder="BATCH-2026-001"
+                class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-600">產品名稱</label>
+              <input id="regProductName" type="text" placeholder="有機高麗菜"
+                class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600">產地</label>
+            <input id="regOrigin" type="text" placeholder="宜蘭縣員山鄉"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600">生產日期（需為過去日期）</label>
+            <input id="regDate" type="date"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+          </div>
+          <button onclick="doRegisterBatch()"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold transition shadow">
+            📦 登記批次上鏈
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab: Trace -->
+      <div id="tab-trace" class="tab-content p-6">
+        <h3 class="font-bold text-slate-700 mb-1">新增供應鏈記錄</h3>
+        <p class="text-xs text-slate-400 mb-5">所有已登記參與者（角色 1–5）均可執行</p>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-slate-600">批次編號 (batchId)</label>
+            <input id="traceId" type="text" placeholder="BATCH-2026-001"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600">操作地點</label>
+            <input id="traceLoc" type="text" placeholder="礁溪截切包裝廠"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600">操作說明</label>
+            <textarea id="traceAction" rows="2" placeholder="低溫清洗、冷藏包裝完成"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600 flex items-center gap-2">
+              溫度（°C）
+              <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-semibold">
+                ⚠️ 超過 8.0°C 觸發警報
+              </span>
+            </label>
+            <div class="flex items-center gap-3 mt-1">
+              <input id="traceTemp" type="number" step="0.1" placeholder="4.0"
+                class="flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                oninput="onTempInput(this.value)"/>
+              <div id="tempBadge"
+                class="w-28 text-center py-2.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-400 transition">
+                — °C
+              </div>
+            </div>
+          </div>
+          <button onclick="doAddTraceRecord()"
+            class="w-full bg-blue-700 hover:bg-blue-800 text-white py-2.5 rounded-xl font-bold transition shadow">
+            📝 寫入鏈上記錄
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab: Query -->
+      <div id="tab-query" class="tab-content p-6">
+        <h3 class="font-bold text-slate-700 mb-4">供應鏈溯源查詢</h3>
+        <div class="flex gap-2 mb-5">
+          <input id="queryBatchId" type="text" placeholder="輸入批次編號，例：BATCH-2026-001"
+            class="flex-1 border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+          <button onclick="doQueryBatch()"
+            class="bg-blue-700 hover:bg-blue-800 text-white px-6 rounded-xl font-bold text-sm transition shadow">
+            🔍 查詢
+          </button>
+        </div>
+        <div id="queryResult" class="hidden space-y-4">
+          <!-- Batch Info -->
+          <div id="batchInfoCard" class="border rounded-xl p-4"></div>
+          <!-- Timeline -->
+          <h4 class="font-bold text-slate-600">供應鏈履歷</h4>
+          <div id="timeline" class="space-y-3 relative pl-10"></div>
+        </div>
+        <div id="queryEmpty" class="hidden text-center py-10 text-slate-400">
+          <p class="text-4xl mb-2">📭</p>
+          <p class="text-sm">找不到此批次</p>
+        </div>
+      </div>
+
+      <!-- Tab: Recall -->
+      <div id="tab-recall" class="tab-content p-6">
+        <h3 class="font-bold text-slate-700 mb-1">產品召回</h3>
+        <p class="text-xs text-slate-400 mb-5">僅限 Regulator（監管機關）角色可執行</p>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
+          <p class="text-red-700 text-sm font-medium">⚠️ 注意：此操作不可逆</p>
+          <p class="text-red-600 text-xs mt-1">批次停用後將封鎖所有後續記錄，但歷史軌跡永久保存於鏈上供追責查閱。</p>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-slate-600">批次編號 (batchId)</label>
+            <input id="recallBatchId" type="text" placeholder="BATCH-2026-001"
+              class="mt-1 w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"/>
+          </div>
+          <button onclick="doDeactivateBatch()"
+            class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-bold transition shadow">
+            ⛔ 執行產品召回（停用批次）
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT: EVENT LOG ===== -->
+    <div class="col-span-1 bg-white rounded-2xl shadow flex flex-col overflow-hidden">
+      <div class="border-b px-4 py-3 flex items-center justify-between bg-slate-50">
+        <h3 class="font-bold text-slate-700 text-sm">📡 即時交易記錄</h3>
+        <button onclick="clearLog()" class="text-xs text-slate-400 hover:text-slate-600 transition">清除</button>
+      </div>
+      <div id="eventLog" class="flex-1 p-3 space-y-2 overflow-y-auto text-xs" style="max-height:560px;">
+        <p class="text-center text-slate-300 py-6">等待操作...</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ─────────────────────────────────────────────
+//  Constants
+// ─────────────────────────────────────────────
+const ABI = [
+  "function owner() external view returns (address)",
+  "function roles(address) external view returns (uint8)",
+  "function assignRole(address _addr, uint8 _role) external",
+  "function getRole(address _addr) external view returns (uint8)",
+  "function registerBatch(string _batchId, string _productName, string _origin, uint256 _productionDate) external",
+  "function addTraceRecord(string _batchId, string _location, string _action, int256 _temperature) external",
+  "function deactivateBatch(string _batchId) external",
+  "function getBatchInfo(string _batchId) external view returns (tuple(string batchId, string productName, string origin, uint256 productionDate, address producer, bool isActive))",
+  "function getBatchHistory(string _batchId) external view returns (tuple(address handler, uint256 role, string location, string action, int256 temperature, uint256 timestamp)[])",
+  "function getTraceCount(string _batchId) external view returns (uint256)",
+  "event BatchRegistered(string indexed batchId, string productName, address producer)",
+  "event RecordAdded(string indexed batchId, address handler, string action, uint256 timestamp)",
+  "event TemperatureAlert(string indexed batchId, int256 temperature, address reporter)",
+  "event RoleAssigned(address indexed account, uint8 role)"
+];
+
+const ROLES = {
+  0: { label: '未指派', color: 'text-slate-500',  bg: 'bg-slate-100',   emoji: '👤' },
+  1: { label: 'Producer 生產者',   color: 'text-emerald-700', bg: 'bg-emerald-100', emoji: '🌱' },
+  2: { label: 'Processor 加工商',  color: 'text-blue-700',    bg: 'bg-blue-100',    emoji: '🏭' },
+  3: { label: 'Logistics 物流商',  color: 'text-orange-700',  bg: 'bg-orange-100',  emoji: '🚛' },
+  4: { label: 'Retailer 零售商',   color: 'text-purple-700',  bg: 'bg-purple-100',  emoji: '🏪' },
+  5: { label: 'Regulator 監管機關',color: 'text-red-700',     bg: 'bg-red-100',     emoji: '🏛️' },
+};
+
+// ─────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────
+let provider = null;
+let signer   = null;
+let contract = null;
+let userAddr = '';
+let userRole = 0;
+
+// ─────────────────────────────────────────────
+//  Wallet
+// ─────────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert('請先安裝 MetaMask！\nhttps://metamask.io');
+    return;
+  }
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    signer   = await provider.getSigner();
+    userAddr = await signer.getAddress();
+
+    document.getElementById('connectBtn').textContent = '✅ 已連接';
+    document.getElementById('connectBtn').classList.replace('bg-emerald-500','bg-emerald-700');
+    document.getElementById('walletAddr').textContent = shortAddr(userAddr);
+    document.getElementById('walletInfo').classList.remove('hidden');
+
+    if (contract) await refreshUserRole();
+    addLog('success', `已連接帳號 ${shortAddr(userAddr)}`);
+
+    window.ethereum.on('accountsChanged', () => location.reload());
+  } catch(e) {
+    addLog('error', '連接錢包失敗：' + (e.message || e));
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Contract
+// ─────────────────────────────────────────────
+async function loadContract() {
+  const addr = document.getElementById('contractAddrInput').value.trim();
+  if (!ethers.isAddress(addr)) {
+    setStatus('⚠️ 地址格式不正確', 'text-red-500');
+    return;
+  }
+  if (!provider) {
+    setStatus('⚠️ 請先連接 MetaMask', 'text-amber-600');
+    return;
+  }
+  try {
+    contract = new ethers.Contract(addr, ABI, signer);
+    // quick sanity check
+    await contract.owner();
+    setStatus('✅ 合約載入成功', 'text-emerald-600');
+    addLog('success', `合約已載入 ${shortAddr(addr)}`);
+    await refreshUserRole();
+    listenEvents();
+  } catch(e) {
+    contract = null;
+    setStatus('❌ 載入失敗，請確認地址和網路', 'text-red-500');
+    addLog('error', '合約載入失敗：' + (e.message || e));
+  }
+}
+
+async function refreshUserRole() {
+  if (!contract || !userAddr) return;
+  userRole = Number(await contract.getRole(userAddr));
+  const r = ROLES[userRole] || ROLES[0];
+  document.getElementById('walletRole').innerHTML =
+    `<span class="text-xs px-2 py-0.5 rounded-full font-semibold ${r.bg} ${r.color}">${r.emoji} ${r.label}</span>`;
+  highlightStage(userRole);
+}
+
+function highlightStage(role) {
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById('badge-' + i);
+    if (el) el.classList.toggle('ring-blue-500', i === role);
+  }
+}
+
+function listenEvents() {
+  contract.on('TemperatureAlert', (batchId, temp, reporter) => {
+    const t = (Number(temp) / 10).toFixed(1);
+    addLog('alert', `🌡️ 超溫警報！批次 ${batchId} 溫度 ${t}°C（${shortAddr(reporter)}）`);
+  });
+  contract.on('BatchRegistered', (batchId, name) => {
+    addLog('success', `📦 批次登記：${name} [${batchId}]`);
+  });
+  contract.on('RecordAdded', (batchId, handler, action) => {
+    addLog('info', `📝 新增記錄：${action.slice(0,20)}... [${batchId}]`);
+  });
+  contract.on('RoleAssigned', (account, role) => {
+    addLog('info', `🔑 角色指派：${shortAddr(account)} → ${ROLES[Number(role)]?.label}`);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Actions
+// ─────────────────────────────────────────────
+async function doAssignRole() {
+  if (!guard()) return;
+  const addr = document.getElementById('roleAddr').value.trim();
+  const role = parseInt(document.getElementById('roleSelect').value);
+  if (!ethers.isAddress(addr)) return addLog('error', '地址格式不正確');
+  try {
+    addLog('pending', '正在送出交易...');
+    const tx = await contract.assignRole(addr, role);
+    addLog('pending', `交易已送出：${shortTx(tx.hash)}`);
+    await tx.wait();
+    addLog('success', `✅ 角色指派成功！${shortAddr(addr)} → ${ROLES[role]?.label}`);
+  } catch(e) { addLog('error', parseErr(e)); }
+}
+
+async function doQueryRole() {
+  if (!guard()) return;
+  const addr = document.getElementById('queryRoleAddr').value.trim();
+  if (!ethers.isAddress(addr)) return addLog('error', '地址格式不正確');
+  try {
+    const role = Number(await contract.getRole(addr));
+    const r = ROLES[role] || ROLES[0];
+    document.getElementById('queryRoleResult').innerHTML =
+      `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full ${r.bg} ${r.color} font-semibold">
+        ${r.emoji} ${r.label}
+      </span>`;
+  } catch(e) { addLog('error', parseErr(e)); }
+}
+
+async function doRegisterBatch() {
+  if (!guard()) return;
+  const batchId     = document.getElementById('regBatchId').value.trim();
+  const productName = document.getElementById('regProductName').value.trim();
+  const origin      = document.getElementById('regOrigin').value.trim();
+  const dateStr     = document.getElementById('regDate').value;
+  if (!batchId || !productName || !origin || !dateStr)
+    return addLog('error', '請填寫所有欄位');
+  const ts = BigInt(Math.floor(new Date(dateStr).getTime() / 1000));
+  try {
+    addLog('pending', '正在送出批次登記...');
+    const tx = await contract.registerBatch(batchId, productName, origin, ts);
+    addLog('pending', `交易已送出：${shortTx(tx.hash)}`);
+    await tx.wait();
+    addLog('success', `✅ 批次登記成功！[${batchId}] ${productName}`);
+  } catch(e) { addLog('error', parseErr(e)); }
+}
+
+async function doAddTraceRecord() {
+  if (!guard()) return;
+  const batchId  = document.getElementById('traceId').value.trim();
+  const location = document.getElementById('traceLoc').value.trim();
+  const action   = document.getElementById('traceAction').value.trim();
+  const tempRaw  = document.getElementById('traceTemp').value;
+  if (!batchId || !location || !action || tempRaw === '')
+    return addLog('error', '請填寫所有欄位');
+  const tempInt = BigInt(Math.round(parseFloat(tempRaw) * 10));
+  try {
+    addLog('pending', '正在送出鏈上記錄...');
+    const tx = await contract.addTraceRecord(batchId, location, action, tempInt);
+    addLog('pending', `交易已送出：${shortTx(tx.hash)}`);
+    await tx.wait();
+    const t = parseFloat(tempRaw);
+    if (t > 8) addLog('alert', `🌡️ 超溫警報觸發！${t}°C > 8.0°C`);
+    addLog('success', `✅ 記錄已寫入鏈上！[${batchId}]`);
+  } catch(e) { addLog('error', parseErr(e)); }
+}
+
+async function doQueryBatch() {
+  if (!guard()) return;
+  const batchId = document.getElementById('queryBatchId').value.trim();
+  if (!batchId) return addLog('error', '請輸入批次編號');
+  try {
+    const info    = await contract.getBatchInfo(batchId);
+    const history = await contract.getBatchHistory(batchId);
+    showBatchResult(info, history);
+    addLog('info', `🔍 查詢完成：${batchId}，共 ${history.length} 筆記錄`);
+  } catch(e) {
+    document.getElementById('queryResult').classList.add('hidden');
+    document.getElementById('queryEmpty').classList.remove('hidden');
+    addLog('error', parseErr(e));
+  }
+}
+
+async function doDeactivateBatch() {
+  if (!guard()) return;
+  const batchId = document.getElementById('recallBatchId').value.trim();
+  if (!batchId) return addLog('error', '請輸入批次編號');
+  if (!confirm(`⛔ 確定要召回批次 "${batchId}" 嗎？此操作不可逆！`)) return;
+  try {
+    addLog('pending', '正在執行產品召回...');
+    const tx = await contract.deactivateBatch(batchId);
+    addLog('pending', `交易已送出：${shortTx(tx.hash)}`);
+    await tx.wait();
+    addLog('alert', `⛔ 批次 [${batchId}] 已停用，召回完成`);
+  } catch(e) { addLog('error', parseErr(e)); }
+}
+
+// ─────────────────────────────────────────────
+//  Render: Batch Query Result
+// ─────────────────────────────────────────────
+function showBatchResult(info, history) {
+  const isActive = info.isActive;
+  const statusHtml = isActive
+    ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">✅ 有效</span>'
+    : '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">⛔ 已召回</span>';
+
+  document.getElementById('batchInfoCard').innerHTML = `
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="font-bold text-slate-800 text-base">${info.productName} <span class="text-slate-400 font-normal text-sm ml-1">[${info.batchId}]</span></p>
+        <p class="text-sm text-slate-500 mt-1">📍 產地：${info.origin}</p>
+        <p class="text-sm text-slate-500">📅 生產日期：${tsToDate(info.productionDate)}</p>
+        <p class="text-xs text-slate-400 font-mono mt-1">生產者：${shortAddr(info.producer)}</p>
+      </div>
+      <div>${statusHtml}</div>
+    </div>`;
+  document.getElementById('batchInfoCard').className =
+    `border rounded-xl p-4 ${isActive ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200 alert-pulse'}`;
+
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  history.forEach((rec, i) => {
+    const r    = ROLES[Number(rec.role)] || ROLES[0];
+    const temp = Number(rec.temperature) / 10;
+    const isLast = i === history.length - 1;
+    const isHot  = temp > 8;
+    const tempBadge = isHot
+      ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">🌡️ ${temp.toFixed(1)}°C ⚠️</span>`
+      : `<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-xs font-semibold">🌡️ ${temp.toFixed(1)}°C</span>`;
+    tl.innerHTML += `
+      <div class="relative flex gap-4 ${isLast ? '' : 'pb-4'}">
+        ${!isLast ? '<div class="timeline-line"></div>' : ''}
+        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg ${r.bg}">${r.emoji}</div>
+        <div class="flex-1 border rounded-xl p-3 bg-white shadow-sm">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-semibold text-sm ${r.color}">${r.label}</span>
+            ${tempBadge}
+            <span class="text-xs text-slate-400 ml-auto">${tsToDate(rec.timestamp, true)}</span>
+          </div>
+          <p class="text-sm text-slate-700 mt-1">📍 ${rec.location}</p>
+          <p class="text-xs text-slate-500 mt-0.5">💬 ${rec.action}</p>
+          <p class="text-xs text-slate-300 font-mono mt-1">${shortAddr(rec.handler)}</p>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('queryEmpty').classList.add('hidden');
+  document.getElementById('queryResult').classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────
+//  UI Helpers
+// ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const tabs = ['admin','register','trace','query','recall'];
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function onTempInput(val) {
+  const v = parseFloat(val);
+  const badge = document.getElementById('tempBadge');
+  if (isNaN(v)) {
+    badge.textContent = '— °C';
+    badge.className = 'w-28 text-center py-2.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-400 transition';
+    return;
+  }
+  if (v > 8) {
+    badge.textContent = `${v.toFixed(1)}°C 🔥`;
+    badge.className = 'w-28 text-center py-2.5 rounded-xl text-sm font-bold bg-red-100 text-red-700 transition';
+  } else {
+    badge.textContent = `${v.toFixed(1)}°C ✅`;
+    badge.className = 'w-28 text-center py-2.5 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-700 transition';
+  }
+}
+
+let logItems = 0;
+function addLog(type, msg) {
+  const log = document.getElementById('eventLog');
+  if (logItems === 0) log.innerHTML = '';
+  logItems++;
+  const colors = {
+    success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    error:   'bg-red-50 text-red-700 border-red-200',
+    alert:   'bg-amber-50 text-amber-800 border-amber-200',
+    pending: 'bg-blue-50 text-blue-700 border-blue-200',
+    info:    'bg-slate-50 text-slate-700 border-slate-200',
+  };
+  const now = new Date().toLocaleTimeString('zh-TW');
+  const div = document.createElement('div');
+  div.className = `border rounded-lg px-3 py-2 text-xs ${colors[type] || colors.info}`;
+  div.innerHTML = `<span class="text-slate-400">${now}</span><br/>${msg}`;
+  log.prepend(div);
+}
+
+function clearLog() {
+  document.getElementById('eventLog').innerHTML = '<p class="text-center text-slate-300 py-6">等待操作...</p>';
+  logItems = 0;
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('contractStatus');
+  el.textContent = msg;
+  el.className = 'text-xs ' + cls;
+}
+
+function guard() {
+  if (!contract) { addLog('error', '請先載入合約'); return false; }
+  if (!signer)   { addLog('error', '請先連接 MetaMask'); return false; }
+  return true;
+}
+
+function shortAddr(addr) {
+  return String(addr).slice(0,6) + '...' + String(addr).slice(-4);
+}
+function shortTx(hash) {
+  return hash.slice(0,10) + '...';
+}
+function tsToDate(ts, withTime = false) {
+  const d = new Date(Number(ts) * 1000);
+  if (withTime) return d.toLocaleString('zh-TW');
+  return d.toLocaleDateString('zh-TW');
+}
+function parseErr(e) {
+  if (e?.reason)  return '❌ ' + e.reason;
+  if (e?.message) return '❌ ' + e.message.slice(0, 80);
+  return '❌ 操作失敗';
+}
+</script>
+</body>
+</html>
