@@ -34,7 +34,7 @@ contract FoodTraceability {
         string  productName;    // 產品名稱
         string  origin;         // 產地
         uint256 productionDate; // 生產日期（Unix timestamp）
-        address producer;       // 生育者地址
+        address producer;       // 生產者地址
         bool    isActive;       // 批次是否有效
     }
 

@@ -45,7 +45,7 @@
 
 ### 重大 Bug 修復與重構紀錄 (Engineering Fixes)
 - **儲存區直寫法 (Storage Pointer) 重構**：原版合約在 `mapping(string => Struct[])` 的動態陣列中使用 `memory` 暫存結構體進行 `.push()`，會引發 EVM 內存分配錯位並噴出 `invalid opcode` 致命崩潰。本版本將其完全重構為**儲存區直寫法**，先執行空 `.push()` 配置 Storage 空間，再透過 `lastIndex` 顯式指針寫入，徹底根治記憶體越界問題。
-- **模擬時鐘落差相容**：移除了會因網頁前端傳輸延遲而誤判廠商「預知未來」的 require 機制，改以區塊客觀時間為準，大幅提升模擬環境下的部署穩定性。
+- **生產日期合理性驗證**：新增 `require(_productionDate <= block.timestamp)` 防護，確保登記的生產日期不可為未來時間，以區塊客觀時間為基準杜絕預填假日期的造假行為。
 
 ### 專案結構
 
